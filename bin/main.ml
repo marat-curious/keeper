@@ -33,7 +33,7 @@ let () =
 
   let do_action = function
     | Add ->
-        let oc = open_out default_filename in
+        let oc = Out_channel.open_gen [Open_append] 0o600 default_filename in
         fprintf oc "%s\n" (!login ^ ":" ^ !password);
         close_out oc
     | _ -> ()
