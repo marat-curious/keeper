@@ -51,6 +51,31 @@ let () =
     check_line (read_line ())
   in
 
+  let read file =
+    let ic = In_channel.open_gen [ Open_rdonly ] 0o600 file in
+    let read_line () = try Some (input_line ic) with End_of_file -> None in
+    let split line = String.split_on_char ':' line in
+    let rec buf_lines acc =
+      match read_line () with
+      | Some line -> buf_lines (line :: acc)
+      | None -> acc
+    in
+    List.map split (buf_lines [])
+  in
+
+  let remove record in_file =
+    let lines = read in_file in
+    let filter_lines = function
+      | [] -> false
+      | l :: _ -> if l <> record then true else false
+    in
+    let oc = Out_channel.open_text in_file in
+    let actual = List.filter filter_lines lines in
+    Out_channel.output_string oc
+      (String.concat "\n" (List.map (fun l -> String.concat ":" l) actual));
+    Out_channel.close oc
+  in
+
   let do_action = function
     | Add ->
         let oc = Out_channel.open_gen [ Open_append ] 0o600 default_filename in
@@ -64,7 +89,7 @@ let () =
             ();
             flush stdout)
     | Edit -> ()
-    | Remove -> ()
+    | Remove -> remove !login default_filename
     | _ -> ()
   in
   do_action !user_action
