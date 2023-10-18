@@ -76,6 +76,22 @@ let () =
     Out_channel.close oc
   in
 
+  let edit record with_record in_file =
+    let lines = read in_file in
+    let update = function
+      | l :: ps -> (
+          match ps with
+          | p :: _ -> if l = record then [ record; with_record ] else [ l; p ]
+          | [] -> [])
+      | [] -> []
+    in
+    let oc = Out_channel.open_text in_file in
+    Out_channel.output_string oc
+      (String.concat "\n"
+         (List.map (fun l -> String.concat ":" l) (List.map update lines)));
+    Out_channel.close oc
+  in
+
   let do_action = function
     | Add ->
         let oc = Out_channel.open_gen [ Open_append ] 0o600 default_filename in
@@ -88,7 +104,7 @@ let () =
         | None ->
             ();
             flush stdout)
-    | Edit -> ()
+    | Edit -> edit !login "new_password" default_filename
     | Remove -> remove !login default_filename
     | _ -> ()
   in
